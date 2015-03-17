@@ -131,7 +131,7 @@ if (!function_exists('showExplanation')) {
                 <label for="fld_email" class="form-label">Электронная почта - ' . $name['email'] . '</label>
             </div>';
             }
-            if ($name['allow_mails']) {
+            if (isset($name['allow_mails'])) {
                 echo '<div class="form-row-indented">
                 <label class="form-label-checkbox" for="allow_mails">
                     <input type="checkbox" checked="" value="1" name="allow_mails" id="allow_mails" class="form-input-checkbox">
