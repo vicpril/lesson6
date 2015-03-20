@@ -6,7 +6,10 @@ session_start();
 //
 // Функции вывода списков городов, метро, категорий
 //
-function show_city_block($gorod = '') {
+function show_city_block($gorod, $show) {
+    if ($show == '' && $gorod == '') {
+        $gorod = 641780;
+    } 
     $cities = array('641780' => 'Новосибирск', '641490' => 'Барабинск', '641510' => 'Бердск', '641600' => 'Искитим', '641630' => 'Колывань', '641680' => 'Краснообск', '641710' => 'Куйбышев', '641760' => 'Мошково', '641790' => 'Обь', '641800' => 'Ордынское', '641970' => 'Черепаново',);
     ?>
 
@@ -17,22 +20,6 @@ function show_city_block($gorod = '') {
         foreach ($cities as $number => $city) {
             $selected = ($number == $gorod) ? 'selected=""' : ''; //если мы передали в функцию город который нужно выставить в списке то мы ставим специальную метку в селектор
             echo '<option data-coords=",," ' . $selected . ' value="' . $number . '">' . $city . '</option>';
-        }
-        ?>
-    </select>    
-    <?php
-}
-
-function show_subway_block($metro = '') {
-    $subways = array('2028' => 'Берёзовая роща', '2018' => 'Гагаринская', '2017' => 'Заельцовская', '2029' => 'Золотая Нива', '2019' => 'Красный проспект', '2027' => 'Маршала Покрышкина', '2021' => 'Октябрьская', '2025' => 'Площадь Гарина-Михайловского', '2020' => 'Площадь Ленина', '2024' => 'Площадь Маркса', '2022' => 'Речной вокзал', '2026' => 'Сибирская', '2023' => 'Студенческая',);
-    ?>
-
-    <select title="Выберите станцию метро" name="metro_id"> 
-        <option value="">-- Выберите станцию метро --</option>
-        <?php
-        foreach ($subways as $number => $subway) {
-            $selected = ($number == $metro) ? 'selected=""' : ''; //если мы передали в функцию город который нужно выставить в списке то мы ставим специальную метку в селектор
-            echo '<option data-coords=",," ' . $selected . ' value="' . $number . '">' . $subway . '</option>';
         }
         ?>
     </select>    
@@ -76,36 +63,27 @@ function deleteExplanation($name) {
     unset($_SESSION['explanation'][$name]);
 }
 
-function showExplanation($id, $changing = false) {
-    $name = (isset($_SESSION['explanation'][$id])) ? $_SESSION['explanation'][$id] :
-            array('private' => '1', 'seller_name' => '', 'email' => '', 'phone' => '',
+function showExplanation($show) {
+    $name = (isset($_SESSION['explanation'][$show])) ? $_SESSION['explanation'][$show] :
+            array('private' => '0', 'seller_name' => '', 'email' => '', 'phone' => '',
         'location_id' => '', 'metro_id' => '', 'category_id' => '', 'title' => '', 'description' => '',
         'price' => '0');
     ?>
     <!DOCTYPE HTML>
     <html>
         <body>
-            <form  method="post" action="index.php?id=<?= $id ?>">
+            <form  method="post">
                 <?php
-                if ($name['private'] == '1') {
-                    echo '<div>
-                            <label>
-                            <input type="radio" checked="" value="1" name="private">Частное лицо
-                            </label>
-                            <label>
-                            <input type="radio" value="0" name="private">Компания
-                            </label>
-                        </div>';
-                } else {
-                    echo '<div>
-                        <label>
-                        <input type="radio" value="1" name="private">Частное лицо
-                        </label>
-                        <label>
-                        <input type="radio" checked="" value="0" name="private">Компания
-                        </label>
-                    </div>';
+                $private['0'] = 'Частное лицо';
+                $private['1'] = 'Компания';
+                echo '<div>';
+                foreach ($private as $value => $text) {
+                    $checked = ($name['private'] == $value) ? 'checked=""' : '';
+                    echo '<label>'
+                    . '<input type="radio"'. $checked .'value="'.$value.'" name="private">'.$text
+                        .'</label>';
                 }
+                echo '</div>';
                 ?>
                 <div>
                     <label><b>Ваше имя</b></label>
@@ -128,7 +106,7 @@ function showExplanation($id, $changing = false) {
                 </div>
                 <div>
                     <label>Город</label>
-                    <?php show_city_block($name['location_id']); ?>   
+                    <?php show_city_block($name['location_id'], $show); ?>   
                 </div>
                 <div>
                     <label>Категория</label> 
@@ -148,16 +126,17 @@ function showExplanation($id, $changing = false) {
                 </div>
                 <div>
                     <input type="submit" value="<?php
-                                                    if ($id == '') {
-                                                        echo 'Подать объявление';
+                                                    if ($show == '') {
+                                                        echo 'Подать объявление" formaction="index.php';
                                                     } else {
-                                                        echo 'Изменить объявление';
+                                                        echo 'Изменить объявление" formaction="index.php?id='.$show.'';
                                                     }
                                                 ?>">
                 </div>
             </form>
+            
             <?php
-            if ($id !== '') {
+            if ($show !== '') {
                 echo '<form method="get">
                         <div>
                         <button value="index.php">Отмена</button>
@@ -170,6 +149,7 @@ function showExplanation($id, $changing = false) {
 // Главный блок: обработка запросов, вывод формы, вывод объявлений
 //
         $id = (isset($_GET['id'])) ? $_GET['id'] : '';
+        $show = (isset($_GET['show'])) ? $_GET['show'] : '';
 
         if (isset($_GET['delete'])) {
             deleteExplanation($_GET['delete']);
@@ -178,12 +158,10 @@ function showExplanation($id, $changing = false) {
         if ($_POST) {
             addExplanation($id);
         }
-        showExplanation($id);
-        //print_r($_SESSION);
-
-
+        
+        showExplanation($show);
+//        print_r($_SESSION);
         echo "<h2>Объявления</h2>";
-
         echo "<table width = 100%>";
         echo "<tr>";
         echo "<th bgcolor='silver'>Название объявления</th>";
@@ -194,7 +172,7 @@ function showExplanation($id, $changing = false) {
         if ($_SESSION) {
             foreach ($_SESSION['explanation'] as $key => &$value) {
                 echo "<tr align = 'center'>";
-                echo "<td><a href='index.php?id=" . $key . "'>" . $value['title'] . "</td>";
+                echo "<td><a href='index.php?show=" . $key . "'>" . $value['title'] . "</td>";
                 echo "<td>" . $value['price'] . "</td>";
                 echo "<td>" . $value['seller_name'] . "</td>";
                 echo "<td><a href='index.php?delete=" . $key . "'>Удалить</a></td>";
@@ -204,6 +182,7 @@ function showExplanation($id, $changing = false) {
         }
 //session_destroy();
         ?>
+            
     </body>
 </html>
 
