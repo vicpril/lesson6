@@ -66,7 +66,7 @@ function deleteExplanation($name) {
 function showExplanation($show) {
     $name = (isset($_SESSION['explanation'][$show])) ? $_SESSION['explanation'][$show] :
             array('private' => '0', 'seller_name' => '', 'email' => '', 'phone' => '',
-        'location_id' => '', 'metro_id' => '', 'category_id' => '', 'title' => '', 'description' => '',
+        'location_id' => '', 'category_id' => '', 'title' => '', 'description' => '',
         'price' => '0');
     ?>
     <!DOCTYPE HTML>
@@ -125,7 +125,7 @@ function showExplanation($show) {
                     <input type="text" maxlength="9" value="<?= $name['price'] ?>" name="price">&nbsp; <span>руб.</span>
                 </div>
                 <div>
-                    <input type="submit" value="<?php
+                    <input type="submit" name="button_add" value="<?php
                                                     if ($show == '') {
                                                         echo 'Подать объявление" formaction="index.php';
                                                     } else {
@@ -155,7 +155,14 @@ function showExplanation($show) {
             deleteExplanation($_GET['delete']);
         }
 
-        if ($_POST) {
+        if (isset($_POST['button_add'])) {
+            foreach ($_POST as $key => &$value) {
+                $value = trim($value, ' .,\|/*-+');
+                if ($key == 'seller_name'||$key == 'email'||$key == 'phone'||$key == 'title'||$key == 'description') {
+                    $value = htmlspecialchars($value);
+                }
+            }
+            $_POST['price'] = (is_numeric($_POST['price'])) ? (float)$_POST['price'] : 0;
             addExplanation($id);
         }
         
